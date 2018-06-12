@@ -16,6 +16,7 @@ import numpy as np
 import codecs
 import os 
 from parse_kd import get_article_str
+import re
 
 #%% Hard coded variables 
 blog_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\raw\\kd_blogs\\'
@@ -35,28 +36,31 @@ def read_local_html(blog_folder,blog_num):
 
     return soup
 
+#%%
+def clean_article(article_str):
+    article_str = article_str.replace("\(.+\)","")
+    # lowercase
+    article_str = article_str.lower()
+
+    #Remove any non alphanumeric characters
+    article_str = re.sub('[^a-z\s]+','', article_str)
+    article_str = re.sub('\s+',' ', article_str)
+    
+    return article_str
+
 #%% Loop through all the blog posts 
 os.chdir(blog_folder)
 num_blog_posts = len(os.listdir(blog_folder))
+documents = []
+num_skipped = 0
 
-for blog_num = range(1:num_blog_posts+1):
-    soup = read_local_html(blog_folder,blog_num)
-    article_str = get_article_str(soup)
-    cleaned_article = clean_article(article_str)
+for blog_num in range(1,num_blog_posts+1):
+    try:
+        soup = read_local_html(blog_folder,blog_num)
+        article_str = get_article_str(soup)
+        cleaned_article = clean_article(article_str)
+        documents.append(cleaned_article)
+    except:
+        print('Blog ' + str(blog_num) + ' skipped')
+        num_skipped += 1
     
-    edited_column_names = ['title', 'tags', 'description', 'paragraphs']
-    
-    'author', 'month_published', 'year_published', , 'related articles', 'awards']
-    df = pd.DataFrame(columns = edited_column_names)
-    
-    
-
-# Change directory to the blog folder 
-    
-# Find all the filenames 
-
-# Loop through the filenames 
-    
-# Parse the information 
-    
-# Write it to a pandas dataframe 

@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import re
 
+#%%
 def get_article_str(soup):
     
     #%% Titles 
@@ -56,6 +57,9 @@ def get_article_str(soup):
     article_str = title + ' ' + tags + ' ' + description + ' ' + main_text
     
     return article_str
+
+#%%
+
 
 #%% 
     
