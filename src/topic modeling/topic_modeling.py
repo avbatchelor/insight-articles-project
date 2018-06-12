@@ -11,6 +11,8 @@ Fit LDA or NNMF
 #%% Import packages 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
+from scipy.misc import toimage
+import PIL
 
 #%% Vectorize 
 no_features = 1000
@@ -45,4 +47,16 @@ no_top_words = 10
 display_topics(nmf, tfidf_feature_names, no_top_words)
 display_topics(lda, tf_feature_names, no_top_words)
 
+#%% Look at probabilities 
+doc_topic_mat = lda.transform(tf)
 
+topic_word_mat = lda.components_ / lda.components_.sum(axis=1)[:, np.newaxis]  
+
+'''
+#Visualize matrix 
+toimage(doc_topic_mat).show()
+from matplotlib import pyplot as plt
+ax = plt.imshow(doc_topic_mat, interpolation='nearest')
+ax.set_aspect('box')
+plt.show()
+'''
