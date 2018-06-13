@@ -17,6 +17,7 @@ import codecs
 import os 
 from parse_kd import get_article_str
 import re
+import pickle
 
 #%% Hard coded variables 
 blog_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\raw\\kd_blogs\\'
@@ -53,6 +54,7 @@ os.chdir(blog_folder)
 num_blog_posts = len(os.listdir(blog_folder))
 documents = []
 num_skipped = 0
+blogs_included = []
 
 for blog_num in range(1,num_blog_posts+1):
     try:
@@ -60,7 +62,14 @@ for blog_num in range(1,num_blog_posts+1):
         article_str = get_article_str(soup)
         cleaned_article = clean_article(article_str)
         documents.append(cleaned_article)
+        blogs_included.append(blog_num)
     except:
         print('Blog ' + str(blog_num) + ' skipped')
         num_skipped += 1
-    
+        
+#%% Save documents 
+processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+filename = processed_data_folder + 'kd_docs'
+
+with open(filename, 'wb') as fp:
+    pickle.dump((documents,blogs_included), fp)

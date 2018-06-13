@@ -11,46 +11,143 @@ Fit LDA or NNMF
 #%% Import packages 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
-from scipy.misc import toimage
-import PIL
+import pandas as pd
+import pickle
+import numpy as np
+
+#%%
+def load_documents():
+    processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+    filename = processed_data_folder + 'kd_docs'
+
+    with open (filename, 'rb') as fp:
+        documents = pickle.load(fp)
+    
+    return documents
 
 #%% Vectorize 
-no_features = 1000
-
-# NMF is able to use tf-idf
-tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, max_features=no_features, stop_words='english')
-tfidf = tfidf_vectorizer.fit_transform(documents)
-tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-
-# LDA can only use raw term counts for LDA because it is a probabilistic graphical model
-tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2, max_features=no_features, stop_words='english')
-tf = tf_vectorizer.fit_transform(documents)
-tf_feature_names = tf_vectorizer.get_feature_names()
+def get_features(method, documents):
+    no_features = 1000
+    
+    if method == 'nmf':
+        # NMF is able to use tf-idf
+        tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, max_features=no_features, stop_words='english')
+        word_embedding = tfidf_vectorizer.fit_transform(documents)
+        feature_names = tfidf_vectorizer.get_feature_names()
+        
+    elif method == 'lda':
+        # LDA can only use raw term counts for LDA because it is a probabilistic graphical model
+        tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2, max_features=no_features, stop_words='english')
+        word_embedding = tf_vectorizer.fit_transform(documents)
+        feature_names = tf_vectorizer.get_feature_names()
+        
+    return word_embedding, feature_names
 
 #%% NMF and LDA
-no_topics = 20
+def generate_model(method, no_topics, word_embedding):
+    
+    if method == 'nmf':
+        # Run NMF
+        model = NMF(n_components=no_topics, random_state=1, alpha=.1, l1_ratio=.5, init='nndsvd').fit(word_embedding)
+        
+    elif method == 'lda':
+        # Run LDA
+        model = LatentDirichletAllocation(n_topics=no_topics, max_iter=5, learning_method='online', learning_offset=50.,random_state=0).fit(word_embedding)
 
-# Run NMF
-nmf = NMF(n_components=no_topics, random_state=1, alpha=.1, l1_ratio=.5, init='nndsvd').fit(tfidf)
-
-# Run LDA
-lda = LatentDirichletAllocation(n_topics=no_topics, max_iter=5, learning_method='online', learning_offset=50.,random_state=0).fit(tf)
+    return model 
 
 #%% Display topics 
-def display_topics(model, feature_names, no_top_words):
+def display_topics(model, feature_names, no_top_words,no_topics,no_labels, word_embedding):
+    top_words = []
+    topic_labels = {}
+    top_word_idxs = []
+    word_array = np.chararray((no_topics, no_top_words))
+    word_array = np.chararray(word_array.shape,itemsize=20)
     for topic_idx, topic in enumerate(model.components_):
+        word_count = 0
+        # Print out topic number and top words
         print("Topic %d:" % (topic_idx))
         print(" ".join([feature_names[i]
                         for i in topic.argsort()[:-no_top_words - 1:-1]]))
+        
+        # Create a string that is a label for that topic
+        topic_labels[topic_idx] = (" ".join([feature_names[i]
+                        for i in topic.argsort()[:-no_labels - 1:-1]]))
+        
+        for word_idx in topic.argsort()[:-no_top_words - 1:-1]:
+            word_array[topic_idx,word_count] = feature_names[word_idx]
+            word_count += 1
+            top_words.append(feature_names[word_idx])
+            top_word_idxs.append(word_idx)
+            
+            # Create a dataframe where rows are topics and columns are top words
+        topic_word_mat = model.components_ / model.components_.sum(axis=1)[:, np.newaxis]  
+        
+        doc_topic_mat = model.transform(word_embedding)
 
-no_top_words = 10
-display_topics(nmf, tfidf_feature_names, no_top_words)
-display_topics(lda, tf_feature_names, no_top_words)
+    return word_array, top_words, top_word_idxs, topic_labels, topic_word_mat, doc_topic_mat
 
-#%% Look at probabilities 
+
+#%%
+def select_top_words(top_word_idxs, topic_word_mat):
+    # Get unique indexes 
+    unique_idxs = np.array(list(set(top_word_idxs)))
+    topic_word_mat_select = topic_word_mat[:,unique_idxs]
+    
+    return topic_word_mat_select 
+
+#%% Look at probabilities
+    
+
+#%% 
+    '''
+from collections import Counter
+counts = Counter(nmf_top_words)
+print(counts)
+
+# Get unique words
+unique_words = set(nmf_top_words)
+num_words = len(unique_words)
+
+'''
+'''
 doc_topic_mat = lda.transform(tf)
+'''
 
-topic_word_mat = lda.components_ / lda.components_.sum(axis=1)[:, np.newaxis]  
+
+#%% Run model 
+def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels):
+    
+    # Load document
+    documents = load_documents()
+    
+    # Get embeddings and features 
+    word_embedding, feature_names = get_features(method, documents)
+    
+    # Generate model 
+    model = generate_model(method, no_topics, word_embedding)
+    
+    words, top_words, top_word_idxs, topic_labels, topic_word_mat, doc_topic_mat = display_topics(model, feature_names, no_top_words, no_topics, no_labels, word_embedding)
+    
+    topic_word_mat_select = select_top_words(top_word_idxs, topic_word_mat)
+    
+    return topic_word_mat_select, topic_labels
+
+#%% Select articles 
+def select_articles(doc_topic_mat):
+    doc_topic = np.argmax(doc_topic_mat,axis=1)
+    
+    
+
+#%% Run model 
+# Set parameters 
+method = 'nmf'
+no_topics = 40
+no_top_words = 20 # orignallly looked at 10
+no_labels = 5
+
+# Run model 
+topic_word_mat_select, topic_labels = get_topic_word_mat_select(method, no_topics, no_top_words, no_labels)
 
 '''
 #Visualize matrix 
