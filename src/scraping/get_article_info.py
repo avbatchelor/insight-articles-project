@@ -70,6 +70,12 @@ for blog_num in included_blogs:
     source, title, author, link = get_article_info(soup)
     info_list.append([source, title, author, link])
 
-#df.append([source, title, author, link])
+df = pd.DataFrame(info_list,columns = edited_column_names )
+df['title'] = df['title'].str.replace("(?<!\S)\s+", "")
 
+#%% Save dataframe 
+processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+filename = processed_data_folder + 'kd_docs_info'
 
+with open(filename, 'wb') as fp:
+    pickle.dump(df, fp)

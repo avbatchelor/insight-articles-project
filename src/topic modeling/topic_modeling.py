@@ -21,7 +21,7 @@ def load_documents():
     filename = processed_data_folder + 'kd_docs'
 
     with open (filename, 'rb') as fp:
-        documents = pickle.load(fp)
+        documents, included_blogs = pickle.load(fp)
     
     return documents
 
@@ -131,12 +131,33 @@ def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels):
     
     topic_word_mat_select = select_top_words(top_word_idxs, topic_word_mat)
     
-    return topic_word_mat_select, topic_labels
+    return topic_word_mat_select, topic_labels, doc_topic_mat
 
 #%% Select articles 
-def select_articles(doc_topic_mat):
-    doc_topic = np.argmax(doc_topic_mat,axis=1)
+def select_articles(doc_topic_mat,no_topics,topic_labels):
     
+    adf = pd.DataFrame(columns=['source','title','author','link'])
+    
+    # Load article info 
+    processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+    filename = processed_data_folder + 'kd_docs_info'
+
+    with open (filename, 'rb') as fp:
+        blog_info = pickle.load(fp)
+        
+    # Randomly select a document 
+    doc_topic = np.argmax(doc_topic_mat,axis=1)
+
+    for topic in range(0,no_topics):   
+        topic_docs = np.squeeze(np.asarray(np.where(doc_topic == topic)))
+        chosen_doc = np.random.choice(topic_docs)
+    
+        print(topic_labels[topic])
+        print(blog_info.iloc[chosen_doc])  
+        
+        adf = adf.append(blog_info.iloc[chosen_doc],ignore_index=True)
+        
+    return adf
     
 
 #%% Run model 
@@ -147,7 +168,19 @@ no_top_words = 20 # orignallly looked at 10
 no_labels = 5
 
 # Run model 
-topic_word_mat_select, topic_labels = get_topic_word_mat_select(method, no_topics, no_top_words, no_labels)
+topic_word_mat_select, topic_labels, doc_topic_mat = get_topic_word_mat_select(method, no_topics, no_top_words, no_labels)
+
+
+# Select articles 
+adf = select_articles(doc_topic_mat,no_topics,topic_labels)
+
+#%% Save documents 
+processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+filename = processed_data_folder + 'article_info'
+
+with open(filename, 'wb') as fp:
+    pickle.dump(adf, fp)
+
 
 '''
 #Visualize matrix 
