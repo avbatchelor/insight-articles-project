@@ -79,3 +79,27 @@ filename = processed_data_folder + 'kd_docs_info'
 
 with open(filename, 'wb') as fp:
     pickle.dump(df, fp)
+
+#%% 
+    '''
+    #%% Links
+tags = soup.find_all('a')
+for i in range(0,len(tags)):
+    a = tags[i].text
+    
+    
+
+    
+    print(a)
+    
+
+    
+
+
+#%% Related articles 
+def related_articles(soup):
+    tag = soup.find_all('ul', class_ = 'three_ul')
+    tags = tag[0].text
+    
+    return article_titles
+    '''

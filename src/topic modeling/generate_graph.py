@@ -22,9 +22,13 @@ method = 'nmf'
 no_topics = 20
 no_top_words = 20 # orignallly looked at 10
 no_labels = 5
+n_grams = True
 
 # Run model 
-topic_word_mat_select, topic_labels, doc_topic_mat = get_topic_word_mat_select(method, no_topics, no_top_words, no_labels)
+topic_word_mat_select, topic_labels, doc_topic_mat = get_topic_word_mat_select(method, no_topics, no_top_words, no_labels, n_grams)
+
+# 
+#adf = select_articles(doc_topic_mat,no_topics,topic_labels)
 
 #%% Calculate distances between the rows 
 dist_mat = squareform(pdist(topic_word_mat_select, metric='cosine'))

@@ -16,12 +16,19 @@ import pickle
 import numpy as np
 
 #%%
-def load_documents():
+def load_documents(n_grams):
     processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+    
     filename = processed_data_folder + 'kd_docs'
-
+    
     with open (filename, 'rb') as fp:
         documents, included_blogs = pickle.load(fp)
+            
+    if n_grams == True:
+        filename = processed_data_folder + 'documents_ngrams'
+    
+        with open (filename, 'rb') as fp:
+            documents = pickle.load(fp)
     
     return documents
 
@@ -116,10 +123,10 @@ doc_topic_mat = lda.transform(tf)
 
 
 #%% Run model 
-def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels):
+def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels, n_grams):
     
     # Load document
-    documents = load_documents()
+    documents = load_documents(n_grams)
     
     # Get embeddings and features 
     word_embedding, feature_names = get_features(method, documents)
@@ -157,29 +164,15 @@ def select_articles(doc_topic_mat,no_topics,topic_labels):
         
         adf = adf.append(blog_info.iloc[chosen_doc],ignore_index=True)
         
-    return adf
+        processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+        filename = processed_data_folder + 'article_info'
     
-
-#%% Run model 
-# Set parameters 
-method = 'nmf'
-no_topics = 40
-no_top_words = 20 # orignallly looked at 10
-no_labels = 5
-
-# Run model 
-topic_word_mat_select, topic_labels, doc_topic_mat = get_topic_word_mat_select(method, no_topics, no_top_words, no_labels)
-
-
-# Select articles 
-adf = select_articles(doc_topic_mat,no_topics,topic_labels)
+        with open(filename, 'wb') as fp:
+            pickle.dump(adf, fp)
+            
 
 #%% Save documents 
-processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
-filename = processed_data_folder + 'article_info'
 
-with open(filename, 'wb') as fp:
-    pickle.dump(adf, fp)
 
 
 '''
