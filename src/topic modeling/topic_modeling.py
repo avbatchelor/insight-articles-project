@@ -14,6 +14,9 @@ from sklearn.decomposition import NMF, LatentDirichletAllocation
 import pandas as pd
 import pickle
 import numpy as np
+from sklearn.feature_extraction import text 
+from scipy.spatial.distance import pdist, squareform
+
 
 #%%
 def load_documents(n_grams):
@@ -39,15 +42,18 @@ def load_documents(n_grams):
 def get_features(method, documents):
     no_features = 1000
     
+    my_stop_words = text.ENGLISH_STOP_WORDS.union(['use','make','good','example','zero'])
+
+    
     if method == 'nmf':
         # NMF is able to use tf-idf
-        tfidf_vectorizer = TfidfVectorizer(max_features=no_features, stop_words='english')
+        tfidf_vectorizer = TfidfVectorizer(max_features=no_features, stop_words=my_stop_words)
         word_embedding = tfidf_vectorizer.fit_transform(documents)
         feature_names = tfidf_vectorizer.get_feature_names()
         
     elif method == 'lda':
         # LDA can only use raw term counts for LDA because it is a probabilistic graphical model
-        tf_vectorizer = CountVectorizer(max_features=no_features, stop_words='english')
+        tf_vectorizer = CountVectorizer(max_features=no_features, stop_words=my_stop_words)
         word_embedding = tf_vectorizer.fit_transform(documents)
         feature_names = tf_vectorizer.get_feature_names()
         
@@ -58,7 +64,7 @@ def generate_model(method, no_topics, word_embedding):
     
     if method == 'nmf':
         # Run NMF
-        model = NMF(n_components=no_topics, random_state=1, alpha=.1, l1_ratio=.5, init='nndsvd').fit(word_embedding)
+        model = NMF(n_components=no_topics, random_state=1, alpha=.1, l1_ratio=.5, init='nndsvd',verbose=1).fit(word_embedding)
         
     elif method == 'lda':
         # Run LDA
@@ -78,11 +84,12 @@ def display_topics(model, feature_names, no_top_words,no_topics,no_labels, word_
     word_array = np.chararray(word_array.shape,itemsize=20)
     for topic_idx, topic in enumerate(model.components_):
         word_count = 0
+        '''
         # Print out topic number and top words
         print("Topic %d:" % (topic_idx))
         print(" ".join([feature_names[i]
                         for i in topic.argsort()[:-no_top_words - 1:-1]]))
-        
+        '''
         # Create a string that is a label for that topic
         topic_labels[topic_idx] = (" ".join([feature_names[i]
                         for i in topic.argsort()[:-no_labels - 1:-1]]))
@@ -144,10 +151,12 @@ def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels, n_gram
     
     topic_word_mat_select = select_top_words(top_word_idxs, topic_word_mat)
     
+    select_articles(doc_topic_mat,no_topics,topic_labels,word_embedding)
+    
     return topic_word_mat_select, topic_labels, doc_topic_mat
 
 #%% Select articles 
-def select_articles(doc_topic_mat,no_topics,topic_labels):
+def select_articles(doc_topic_mat,no_topics,topic_labels,word_embedding):
     
     adf = pd.DataFrame(columns=['source','title','author','link'])
     
@@ -157,14 +166,31 @@ def select_articles(doc_topic_mat,no_topics,topic_labels):
 
     with open (filename, 'rb') as fp:
         blog_info = pickle.load(fp)
-        
+    '''    
     # Randomly select a document 
     doc_topic = np.argmax(doc_topic_mat,axis=1)
-
+    '''
+    
+    
+    
     for topic in range(0,no_topics):   
+        '''
+        Select document based on:
+            which document has the most similar probability distribution
+            over words at that topic 
+        '''
+        # Find the cosine distance between that topic and all documents 
+        topic_array = topic_word_mat[topic]
+        word_embedding_temp = word_embedding.todense()
+        comp_mat = np.vstack((topic_array,word_embedding_temp))
+        distances = squareform(pdist(comp_mat,metric='cosine'))
+        np.fill_diagonal(distances,1)
+        chosen_doc = np.argmin(distances[0,:])
+        
+        '''
         topic_docs = np.squeeze(np.asarray(np.where(doc_topic == topic)))
         chosen_doc = np.random.choice(topic_docs)
-    
+        '''
         print(topic_labels[topic])
         print(blog_info.iloc[chosen_doc])  
         

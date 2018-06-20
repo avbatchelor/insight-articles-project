@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 #%% Topic modeling 
 method = 'nmf'
-no_topics = 100
+no_topics = 50
 no_top_words = 1000 # orignallly looked at 10
 no_labels = 5
 n_grams = False
@@ -44,7 +44,7 @@ plt.barh(range(1,no_topics+1), docs_per_topic)
 ax = plt.gca()
 ax.set_yticks(range(1,no_topics+1))
 ax.set_yticklabels(topic_labels.values())
-plt.tight_layout()
+#plt.tight_layout()
 
 #%% Calculate distances between the rows 
 dist_mat = squareform(pdist(topic_word_mat_select, metric='cosine'))
@@ -64,7 +64,7 @@ for idx in max_idx:
 if method == 'lda':
     graph_mat = dist_mat < 0.5
 else:
-    graph_mat = dist_mat < 0.9
+    graph_mat = dist_mat < 0.95
 
 #%% Visualize graph 
 # Code copied from: https://stackoverflow.com/questions/13513455/drawing-a-graph-or-a-network-from-a-distance-matrix
@@ -79,10 +79,11 @@ nx.draw(G,pos)
 nx.draw_networkx_labels(G,pos,topic_labels,font_size=16)
 
 #%% Visualize lda results 
+'''
 pyLDAvis.enable_notebook()
 panel = pyLDAvis.sklearn.prepare(best_lda_model, data_vectorized, vectorizer, mds='tsne')
 panel
-
+'''
 #%% Save graph mat and labels 
 processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
 filename = processed_data_folder + 'graph_and_labels'
@@ -111,8 +112,11 @@ nx.draw(G,fig_file, format='png', prog='neato')
 
 #%% Dendrogram 
 from scipy.cluster.hierarchy import ward, dendrogram
+from scipy.cluster.hierarchy import ward, dendrogram
+from scipy.cluster.hierarchy import linkage
 
 linkage_matrix = ward(dist_mat) #define the linkage_matrix using ward clustering pre-computed distances
+#linkage_matrix = linkage(dist_mat)
 
 fig, ax = plt.subplots(figsize=(15, 20)) # set size
 ax = dendrogram(linkage_matrix, orientation="left", labels=list(topic_labels.values()));
