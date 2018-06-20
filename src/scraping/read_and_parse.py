@@ -18,9 +18,11 @@ import re
 import pickle
 import nltk
 from nltk.stem.wordnet import WordNetLemmatizer
+import spacy
+from gensim import models
+import pickle
+from sklearn.feature_extraction import stop_words
 
-#%% Hard coded variables 
-blog_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\raw\\kd_blogs\\'
 
 #%% Read in saved html
 # read in saved html back in
@@ -85,9 +87,26 @@ def clean_article(article_str):
     # lowercase
     article_str = article_str.lower()
 
-    #Remove any non alphanumeric characters
-    article_str = re.sub('[^a-z\s]+','', article_str)
+    #Remove any non alphanumeric characters that are no end-of-sentence punctuation
+    article_str = re.sub('[^a-z\s\.\?\!]+','', article_str)
+    
+    # Replace ? with . 
+    article_str = re.sub('\?','.', article_str)
+    # Replace ! with . 
+    article_str = re.sub('\!','.', article_str)
+    
+    # Replace more than one whitespace with one whitespace
     article_str = re.sub('\s+',' ', article_str)
+    # Remove trailing whitespace 
+    article_str = re.sub("\s+(?!\S)", "",article_str)
+    # Remove preceding whitespace 
+    article_str = re.sub("(?<!\S)\s+", "",article_str)
+    
+    # Replace funny words from lemmatization
+    article_str = re.sub("datum","data",article_str)
+    article_str = re.sub("learn\s","learning",article_str)
+    article_str = re.sub("miss","missing",article_str)
+    
     
     return article_str
 
@@ -114,18 +133,44 @@ def get_sentences(article_str):
     return tokenized_sentences
 
 #%% 
-def lemmatize(tokenized_sentences):
-    lemma = WordNetLemmatizer()
-    new_docs = []
-    for sentence in tokenized_sentences:
-        new_sentence = []
-        for word in sentence:
-            new_sentence.append(lemma.lemmatize(word)
-        new_docs.append(new_sentence)
+def lemmatize(cleaned_article):
+    nlp = spacy.load('en', disable=['parser', 'ner'])
+
+    doc = nlp(article_str)
+    lemma_article = " ".join([token.lemma_ if token.lemma_ not in ['-PRON-'] else '' for token in doc])
+
+    cleaned_lemma = clean_article(lemma_article)
+    return cleaned_lemma
+
+#%% Extract phrases from all the documents 
+def phrase_extractor(doc_sents):
+    # rename some functions
+    Phraser = models.phrases.Phraser
+    Phrases = models.phrases.Phrases
+    
+    # Generate list of sentences 
+    sentence_stream = sum(doc_sents, [])
+    
+    # Generate bigrams
+    common_terms = ["of", "with", "without", "and", "or", "the", "a", "as"]
+    phrases = Phrases(sentence_stream, common_terms=common_terms)
+    bigram = Phraser(phrases)
+    
+    # Generate trigrams 
+    trigram = Phrases(bigram[sentence_stream])
+    
+    # Generate output
+    output_strs = []
+    for idx in range(0,len(doc_sents)):
+        doc = doc_sents[idx]
+        output_doc = list(trigram[doc])
+        output_str = sum(output_doc,[])
+        output_strs.append(' '.join(output_str))
         
-    return new_docs
+    return output_strs
 
 #%% Loop through all the blog posts 
+blog_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\raw\\kd_blogs\\'
 os.chdir(blog_folder)
 num_blog_posts = len(os.listdir(blog_folder))
 documents = []
@@ -135,19 +180,30 @@ doc_sents = []
 
 for blog_num in range(1,num_blog_posts+1):
     try:
+        # Parse html 
         soup = read_local_html(blog_folder,blog_num)
         article_str = get_article_str(soup)
         cleaned_article = clean_article(article_str)
-        documents.append(cleaned_article)
-        blogs_included.append(blog_num)
+        lemma_article = lemmatize(cleaned_article)
+        
         # Extract sentences for phrase extraction 
-        tokenized_sentences = get_sentences(article_str)
-        new_docs = lemmatize(tokenized_sentences)
+        tokenized_sentences = get_sentences(lemma_article)
         doc_sents.append(tokenized_sentences)
+        
+        # Meta data 
+        blogs_included.append(blog_num)
+        
+        
     except:
         print('Blog ' + str(blog_num) + ' skipped')
         num_skipped += 1
-        
+
+
+documents = phrase_extractor(doc_sents)
+
+#documents.append(cleaned_article)     
+
+   
 #%% Save documents 
 processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
 filename = processed_data_folder + 'kd_docs'
@@ -155,7 +211,9 @@ filename = processed_data_folder + 'kd_docs'
 with open(filename, 'wb') as fp:
     pickle.dump((documents,blogs_included), fp)
     
+'''
 filename = processed_data_folder + 'doc_sents'
 
 with open(filename, 'wb') as fp:
     pickle.dump(doc_sents, fp)
+'''

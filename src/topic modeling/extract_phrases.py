@@ -12,7 +12,6 @@ from gensim import models
 import pickle
 from sklearn.feature_extraction import stop_words
  
-
 # rename some functions
 Phraser = models.phrases.Phraser
 Phrases = models.phrases.Phrases
@@ -49,3 +48,4 @@ filename = processed_data_folder + 'documents_ngrams'
 
 with open(filename, 'wb') as fp:
     pickle.dump(output_strs, fp)
+    

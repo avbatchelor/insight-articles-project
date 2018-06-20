@@ -23,14 +23,17 @@ def load_documents(n_grams):
     
     with open (filename, 'rb') as fp:
         documents, included_blogs = pickle.load(fp)
-            
+        
+    return documents
+    
+'''        
     if n_grams == True:
         filename = processed_data_folder + 'documents_ngrams'
     
         with open (filename, 'rb') as fp:
             documents = pickle.load(fp)
-    
-    return documents
+''' 
+   
 
 #%% Vectorize 
 def get_features(method, documents):
@@ -38,13 +41,13 @@ def get_features(method, documents):
     
     if method == 'nmf':
         # NMF is able to use tf-idf
-        tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, max_features=no_features, stop_words='english')
+        tfidf_vectorizer = TfidfVectorizer(max_features=no_features, stop_words='english')
         word_embedding = tfidf_vectorizer.fit_transform(documents)
         feature_names = tfidf_vectorizer.get_feature_names()
         
     elif method == 'lda':
         # LDA can only use raw term counts for LDA because it is a probabilistic graphical model
-        tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2, max_features=no_features, stop_words='english')
+        tf_vectorizer = CountVectorizer(max_features=no_features, stop_words='english')
         word_embedding = tf_vectorizer.fit_transform(documents)
         feature_names = tf_vectorizer.get_feature_names()
         
@@ -59,7 +62,10 @@ def generate_model(method, no_topics, word_embedding):
         
     elif method == 'lda':
         # Run LDA
-        model = LatentDirichletAllocation(n_topics=no_topics, max_iter=5, learning_method='online', learning_offset=50.,random_state=0).fit(word_embedding)
+        model = LatentDirichletAllocation(n_topics=no_topics, max_iter=50, learning_method='online', learning_offset=50.,random_state=0,verbose=1,evaluate_every=1).fit(word_embedding)
+        
+        print("Log Likelihood: ", model.score(word_embedding))
+        print("Perplexity: ", model.perplexity(word_embedding))
 
     return model 
 

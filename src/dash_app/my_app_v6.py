@@ -75,5 +75,16 @@ def update_rows(selected_value):
             output_arr.append(html.P(test_str))
     return output_arr
 
+##############################
+'''
+external_css = ["https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i",
+                "https://cdn.rawgit.com/plotly/dash-app-stylesheets/2cc54b8c03f4126569a3440aae611bbef1d7a5dd/stylesheet.css"]
+
+for css in external_css:
+    app.css.append_css({"external_url": css})
+'''
+app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
+
+
 if __name__ == '__main__':
     app.run_server(debug=True)
