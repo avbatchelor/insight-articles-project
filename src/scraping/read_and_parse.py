@@ -204,13 +204,13 @@ documents = phrase_extractor(doc_sents)
 #documents.append(cleaned_article)     
 
    
-#%% Save documents 
+# Save documents 
 processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
 filename = processed_data_folder + 'kd_docs'
 
 with open(filename, 'wb') as fp:
     pickle.dump((documents,blogs_included), fp)
-    
+
 '''
 filename = processed_data_folder + 'doc_sents'
 

@@ -19,13 +19,25 @@ from scipy.spatial.distance import pdist, squareform
 
 
 #%%
-def load_documents(n_grams):
+def load_documents(n_grams,doc_type):
+    
     processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
     
-    filename = processed_data_folder + 'kd_docs'
-    
-    with open (filename, 'rb') as fp:
-        documents, included_blogs = pickle.load(fp)
+    if doc_type == 'normal':
+        
+        
+        filename = processed_data_folder + 'kd_docs'
+        
+        with open (filename, 'rb') as fp:
+            documents, included_blogs = pickle.load(fp)
+            
+    elif doc_type == 'meta':
+        
+        filename = processed_data_folder + 'meta_docs'
+        
+        with open (filename, 'rb') as fp:
+            documents = pickle.load(fp)
+        
         
     return documents
     
@@ -136,10 +148,10 @@ doc_topic_mat = lda.transform(tf)
 
 
 #%% Run model 
-def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels, n_grams):
+def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels, n_grams,doc_type):
     
     # Load document
-    documents = load_documents(n_grams)
+    documents = load_documents(n_grams,doc_type)
     
     # Get embeddings and features 
     word_embedding, feature_names = get_features(method, documents)
@@ -151,12 +163,10 @@ def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels, n_gram
     
     topic_word_mat_select = select_top_words(top_word_idxs, topic_word_mat)
     
-    select_articles(doc_topic_mat,no_topics,topic_labels,word_embedding)
-    
-    return topic_word_mat_select, topic_labels, doc_topic_mat
+    return topic_word_mat_select, topic_labels, doc_topic_mat, word_embedding
 
 #%% Select articles 
-def select_articles(doc_topic_mat,no_topics,topic_labels,word_embedding):
+def select_articles(topic_no_list,doc_topic_mat,no_topics,topic_labels,word_embedding,selection_method):
     
     adf = pd.DataFrame(columns=['source','title','author','link'])
     
@@ -166,31 +176,29 @@ def select_articles(doc_topic_mat,no_topics,topic_labels,word_embedding):
 
     with open (filename, 'rb') as fp:
         blog_info = pickle.load(fp)
-    '''    
-    # Randomly select a document 
-    doc_topic = np.argmax(doc_topic_mat,axis=1)
-    '''
     
-    
-    
-    for topic in range(0,no_topics):   
+    if selection_method == 'random':
+        # Randomly select a document 
+        doc_topic = np.argmax(doc_topic_mat,axis=1)
+
+    for topic in topic_no_list:   
         '''
         Select document based on:
             which document has the most similar probability distribution
             over words at that topic 
         '''
-        # Find the cosine distance between that topic and all documents 
-        topic_array = topic_word_mat[topic]
-        word_embedding_temp = word_embedding.todense()
-        comp_mat = np.vstack((topic_array,word_embedding_temp))
-        distances = squareform(pdist(comp_mat,metric='cosine'))
-        np.fill_diagonal(distances,1)
-        chosen_doc = np.argmin(distances[0,:])
-        
-        '''
-        topic_docs = np.squeeze(np.asarray(np.where(doc_topic == topic)))
-        chosen_doc = np.random.choice(topic_docs)
-        '''
+        if selection_method == 'closest':
+            # Find the cosine distance between that topic and all documents 
+            topic_array = topic_word_mat[topic]
+            word_embedding_temp = word_embedding.todense()
+            comp_mat = np.vstack((topic_array,word_embedding_temp))
+            distances = squareform(pdist(comp_mat,metric='cosine'))
+            np.fill_diagonal(distances,1)
+            chosen_doc = np.argmin(distances[0,:])
+        else:
+            topic_docs = np.squeeze(np.asarray(np.where(doc_topic == topic)))
+            chosen_doc = np.random.choice(topic_docs)
+
         print(topic_labels[topic])
         print(blog_info.iloc[chosen_doc])  
         

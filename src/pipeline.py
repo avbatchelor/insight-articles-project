@@ -7,24 +7,33 @@ Created on Mon Jun 18 22:05:23 2018
 Pipeline 
 """
 
+#%% Import packages
+import os 
+os.chdir('C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\src\\scraping\\') 
+
+
 #%% 
 '''
 Input = local HTML
 Output = Save article strings and document sentences 
 '''
-read_and_parse()
+import read_and_parse
 
 #%% 
-'''
-Extract phrases 
-Input = article string  
-Output = article string with bigrams and trigrams 
-'''
-extract_phrases()
+
+import get_article_info
 
 #%% 
 '''
 Topic modeling
 
 '''
-topic_modeling()
+#topic_modeling()
+
+#%% Generate graph 
+os.chdir('C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\src\\topic modeling\\') 
+import generate_graph
+
+
+#%% Linear topic sequence 
+import linear_topic_sequence

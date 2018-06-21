@@ -16,9 +16,10 @@ processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-pr
 filename = processed_data_folder + 'graph_and_labels'
 
 with open (filename, 'rb') as fp:
-        graph_mat,topic_labels = pickle.load(fp)
+        graph_mat,topic_labels,dist_mat = pickle.load(fp)
         
 #%% 
+np.argsort(dist_mat,axis=0)
 no_topics = len(graph_mat)
 sequence_len = 3
 topic_sequence = np.empty([no_topics,sequence_len])
