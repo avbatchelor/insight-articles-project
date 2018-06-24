@@ -6,27 +6,37 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 import networkx as nx
 import pickle
+import boto3
 import io
+import numpy
 
 ############################
-# Load data 
-processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
-filename = processed_data_folder + 'graph_and_labels'
+# Load data
 
-with open (filename, 'rb') as fp:
-        graph_mat,topic_labels,dist_mat,doc_topic_mat = pickle.load(fp)
+BUCKET_NAME = 'blog-seq-data' # replace with your bucket name
+
+# list of topics
+KEY = 'graph_and_labels' # replace with your object key
+s3 = boto3.client('s3')
+obj = s3.get_object(Bucket=BUCKET_NAME, Key=KEY)
+obj_str = obj['Body'].read()     
+graph_mat,topic_labels,dist_mat,doc_topic_mat = pickle.loads(obj_str)
 
 topic_list = list(topic_labels.values())
 
-filename = processed_data_folder + 'article_info'
+# article info
+KEY = 'article_info' # replace with your object key
+s3 = boto3.client('s3')
+obj = s3.get_object(Bucket=BUCKET_NAME, Key=KEY)
+obj_str = obj['Body'].read()     
+adf = pickle.loads(obj_str)
 
-with open (filename, 'rb') as fp:
-        adf = pickle.load(fp)
-
-filename = processed_data_folder + 'topic_seq'
-
-with open (filename, 'rb') as fp:
-        topic_sequence = pickle.load(fp)
+# topic sequence 
+KEY = 'topic_seq' # replace with your object key
+s3 = boto3.client('s3')
+obj = s3.get_object(Bucket=BUCKET_NAME, Key=KEY)
+obj_str = obj['Body'].read()     
+topic_sequence = pickle.loads(obj_str)
 
 ############################
 app = dash.Dash()

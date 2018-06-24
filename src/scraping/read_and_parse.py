@@ -144,6 +144,9 @@ def lemmatize(cleaned_article):
 
 #%% Extract phrases from all the documents 
 def phrase_extractor(doc_sents):
+    '''
+    doc_sents is a list where each element is a list with elements corresponding to individual sentences of a document
+    '''
     # rename some functions
     Phraser = models.phrases.Phraser
     Phrases = models.phrases.Phrases
