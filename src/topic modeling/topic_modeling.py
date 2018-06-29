@@ -59,17 +59,17 @@ def get_features(method, documents):
     
     if method == 'nmf':
         # NMF is able to use tf-idf
-        tfidf_vectorizer = TfidfVectorizer(max_features=no_features, stop_words=my_stop_words)
-        word_embedding = tfidf_vectorizer.fit_transform(documents)
-        feature_names = tfidf_vectorizer.get_feature_names()
+        vectorizer = TfidfVectorizer(max_features=no_features, stop_words=my_stop_words)
+        word_embedding = vectorizer.fit_transform(documents)
+        feature_names = vectorizer.get_feature_names()
         
     elif method == 'lda':
         # LDA can only use raw term counts for LDA because it is a probabilistic graphical model
-        tf_vectorizer = CountVectorizer(max_features=no_features, stop_words=my_stop_words)
-        word_embedding = tf_vectorizer.fit_transform(documents)
-        feature_names = tf_vectorizer.get_feature_names()
+        vectorizer = CountVectorizer(max_features=no_features, stop_words=my_stop_words)
+        word_embedding = vectorizer.fit_transform(documents)
+        feature_names = vectorizer.get_feature_names()
         
-    return word_embedding, feature_names
+    return word_embedding, feature_names, vectorizer
 
 #%% NMF and LDA
 def generate_model(method, no_topics, word_embedding):
@@ -154,7 +154,7 @@ def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels, n_gram
     documents = load_documents(n_grams,doc_type)
     
     # Get embeddings and features 
-    word_embedding, feature_names = get_features(method, documents)
+    word_embedding, feature_names, vectorizer = get_features(method, documents)
     
     # Generate model 
     model = generate_model(method, no_topics, word_embedding)
@@ -162,6 +162,15 @@ def get_topic_word_mat_select(method, no_topics, no_top_words, no_labels, n_gram
     words, top_words, top_word_idxs, topic_labels, topic_word_mat, doc_topic_mat = display_topics(model, feature_names, no_top_words, no_topics, no_labels, word_embedding)
     
     topic_word_mat_select = select_top_words(top_word_idxs, topic_word_mat)
+    
+    # Save model, word_freqs and vectorizer  
+    word_freqs = word_embedding 
+    processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+    filename = processed_data_folder + 'lda_viz_data'
+    
+    with open(filename, 'wb') as fp:
+        pickle.dump((model, word_freqs, vectorizer), fp)
+    
     
     return topic_word_mat_select, topic_labels, doc_topic_mat, word_embedding
 

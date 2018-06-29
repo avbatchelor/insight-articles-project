@@ -21,7 +21,7 @@ with open (filename, 'rb') as fp:
 filename = processed_data_folder + 'graph_and_labels'
 
 with open (filename, 'rb') as fp:
-        graph_mat,topic_labels = pickle.load(fp)
+        graph_mat,topic_labels, doc_topic_mat, word_embedding = pickle.load(fp)
 
 topic_list = list(topic_labels.values())
 

@@ -51,7 +51,7 @@ with open(filename, 'wb') as fp:
     
 #%% Perform NMF 
 method = 'nmf'
-no_topics = 10
+no_topics = 20
 no_top_words = 1000 # orignallly looked at 10
 no_labels = 5
 n_grams = False
@@ -68,3 +68,10 @@ for topic_no in range(0,no_topics):
     topic_idxs, = np.where(meta_topic_assignments == topic_no)
     print('Meta topic no = ',topic_no,' ',meta_topic_labels[topic_no])
     print([topic_labels[key] for key in topic_idxs])
+    
+#%% Save assigments 
+processed_data_folder = 'C:\\Users\\Alex\\Documents\\GitHub\\insight-articles-project\\data\\processed\\'
+filename = processed_data_folder + 'topic_assignments'
+
+with open(filename, 'wb') as fp:
+    pickle.dump((topic_assignments, meta_topic_assignments), fp)  

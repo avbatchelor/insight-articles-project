@@ -64,9 +64,45 @@ layout = dict(
 )
 
 
+###########################
+# Layout functions
+
+demo_slides = "https://docs.google.com/presentation/d/e/2PACX-1vTomIS7JWIKKHgNcO_Lh8uvxhAjREwyKYGEUPKTAyqkgpsrH00pdP7FBZsPSUWpT6txcI6tZdsYjniw/pub?start=false&loop=false&delayms=3000"
+
+# Navbar 
+def get_menu():
+    menu = html.Div([
+
+        dcc.Link('Overview   ', href='/overview', className="tab first"),
+
+        dcc.Link('Price Performance   ', href='/price-performance', className="tab"),
+
+        dcc.Link('Portfolio & Management   ', href='/portfolio-management', className="tab"),
+
+        dcc.Link('Fees & Minimums   ', href='/fees', className="tab"),
+
+        dcc.Link('Distributions   ', href='/distributions', className="tab"),
+
+        dcc.Link('News & Reviews   ', href='/news-and-reviews', className="tab")
+
+    ], className="row ")
+    return menu
+
+
 ############################
-# Layout section 
-app.layout = html.Div(children=[
+# Page layouts 
+overview = html.Div([  # page 1
+
+        html.Div([
+
+            # Header
+            get_menu(),
+
+            ], className="row "),
+
+    ], className="page")
+
+pricePerformance = html.Div(children=[
     html.H1(children='Blog curator'),
 
     html.Div(children='''
@@ -92,14 +128,14 @@ app.layout = html.Div(children=[
                         id='my-dropdown',
                         options=[{'label':topic, 'value':topic_no} for topic_no, topic in enumerate(topic_list)],
                         value=0)
-                ], className = "six columns"
+                ], className = "two columns"
             ),
 
             html.Div(
                 [
 
                 ],
-                className="six columns"
+                className="ten columns"
             ),
 
             html.Div(
@@ -111,8 +147,17 @@ app.layout = html.Div(children=[
 
 ])
 
+############################
+# Layout section 
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content')
+])
+
+
 ##############################
 # Callbacks 
+'''
 @app.callback(
     dash.dependencies.Output('my-datatable', 'children'),
     [dash.dependencies.Input('my-dropdown', 'value')])
@@ -127,6 +172,28 @@ def update_rows(selected_value):
             output_arr.append(html.H3(topic_list[int(topic)]))
             output_arr.append(html.P(test_str))
     return output_arr
+'''
+
+# Update page
+@app.callback(dash.dependencies.Output('page-content', 'children'),
+              [dash.dependencies.Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == '/' or pathname == '/overview':
+        return overview
+    elif pathname == '/price-performance':
+        return pricePerformance
+    elif pathname == '/portfolio-management':
+        return portfolioManagement
+    elif pathname == '/fees':
+        return feesMins
+    elif pathname == '/distributions':
+        return distributions
+    elif pathname == '/news-and-reviews':
+        return newsReviews
+    elif pathname == '/full-view':
+        return overview,pricePerformance,portfolioManagement,feesMins,distributions,newsReviews
+    else:
+        return noPage
 
 ##############################
 '''
